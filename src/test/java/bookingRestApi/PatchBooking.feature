@@ -1,10 +1,10 @@
-Feature: Delete Booking
+Feature: Patch Booking
 
   Background:
     * url 'https://restful-booker.herokuapp.com'
     * configure headers = { Accept: 'application/json' }
 
-  Scenario: Eliminar una reserva con éxito
+  Scenario: Patch (actualizar parcialmente) una reserva con éxito
     # Crear la reserva
     Given path 'booking'
     And request
@@ -25,7 +25,7 @@ Feature: Delete Booking
     Then status 200
     * def createdBookingId = response.bookingid
 
-    # Obtener token
+    # Obtener el token
     Given path 'auth'
     And request
       """
@@ -38,13 +38,19 @@ Feature: Delete Booking
     Then status 200
     * def tokenAuth = response.token
 
-    # Eliminar la reserva
+    # Patch (actualizar solo el nombre y apellido)
     Given path 'booking', createdBookingId
     And header Cookie = 'token=' + tokenAuth
-    When method DELETE
-    Then status 201
+    And header Content-Type = 'application/json'
+    And request
+      """
+      {
+        "firstname": "NombrePatch",
+        "lastname": "ApellidoPatch"
+      }
+      """
+    When method PATCH
+    Then status 200
+    And match response.firstname == "NombrePatch"
+    And match response.lastname == "ApellidoPatch"
 
-    # Validar que ya no exista
-    Given path 'booking', createdBookingId
-    When method GET
-    Then status 404
